@@ -6,19 +6,21 @@ import java.io.*;
 public class Client {
 
     private static final String EXIT_URL = "/exit";
-    private static final String ADDRESS = "127.0.0.1";
+    private static final String ADDRESS = "127.0.0.2";
     private static final int SERVER_PORT = 6666;
     private static final String ERROR_MESSAGE = "problems on the server";
-    static DataInputStream in;
+    private static Socket socket;
 
     public static void main(String[] ar) {
+
+        System.out.println("asd".indexOf(" "));
+
         try {
             InetAddress ipAddress = InetAddress.getByName(ADDRESS);
-            Socket socket = new Socket(ipAddress, SERVER_PORT);
+            socket = new Socket(ipAddress, SERVER_PORT);
             DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-            in = new DataInputStream(socket.getInputStream());
 
-            InputData inputData = new InputData();
+            InputData inputData = new InputData(socket);
             inputData.start();
 
             BufferedReader keyboard = new BufferedReader(new InputStreamReader(System.in));
@@ -38,18 +40,25 @@ class InputData extends Thread {
     private static final String EXIT_INPUT_LINE = "exited";
     private static final String MESSAGE_SEND = "message send";
     private static final String ERROR_MESSAGE = "error";
+    private  Socket socket;
+
+    InputData(Socket socket) {
+        this.socket = socket;
+    }
 
     public void run() {
-        try{
-            String inputLine;
+        try (DataInputStream in = new DataInputStream(socket.getInputStream())) {
+            String read;
             do {
-                inputLine =Client.in.readUTF();
-                if (!inputLine.equals(MESSAGE_SEND))
-                    System.out.println(inputLine);
-            }while (!inputLine.equalsIgnoreCase(EXIT_INPUT_LINE));
+                read = in.readUTF();
+                if (!read.equals(MESSAGE_SEND)) {
+                    System.out.println(read);
+                }
+            }while (!read.equalsIgnoreCase(EXIT_INPUT_LINE));
         } catch (IOException e) {
+           System.err.print(e);
+           e.printStackTrace();
            System.err.print(ERROR_MESSAGE);
         }
     }
 }
-
